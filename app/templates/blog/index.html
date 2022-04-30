@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% from "tags/tags.html" import display_tag_string %}
+{% from "pagination/pagination.html" import display_pagination %}
+
+{% block header %}
+	<h1>{% block title%}Posts{% endblock %}{% if tag %} with Tag "{{ tag }}"{% endif %}{% if search %} for Search Query "{{ search }}"{% endif %}</h1>
+	{% if g.user %}
+		<a class="action" href="{{ url_for('blog.create') }}">New</a>
+	{% endif %}
+{% endblock %}
+
+{% block content %}
+	{% for post in posts %}
+		<article class="post">
+			<header>
+				<div>
+					<h1><a href="{{ url_for('blog.detail', id=post['id'])}}">{{ post['title']}}</a></h1>
+					<div class="about">by {{ post["username"] }} on {{ post["created"] }}</div>
+				</div>
+				{% if g.user['id'] == post["author_id"] %}
+					<a class="action" href="{{ url_for('blog.update', id=post['id']) }}">Edit</a>
+				{% endif %}
+			</header>
+			<p class="body">{{ post['body_html']|safe }}</p>
+			<footer>
+				{% if post['tag_string'] %}
+					{{ display_tag_string(tag_string=post['tag_string']) }}
+				{% endif %}
+			</footer>
+		</article>
+		{% if not loop.last %}
+			<hr>
+		{% endif %}
+	{% endfor %}
+	{% if pagination %}
+		{% if search %}
+			{{ display_pagination(
+				base_url=url_for("search.display_search_filtered_index", q=search),
+				pagination=pagination,
+				querystring_connector="&")
+			}}
+		{% elif tag %}
+			{{ display_pagination(
+				base_url=url_for("tags.display_tagged_posts", tag=tag),
+				pagination=pagination)
+			}}
+		{% else %}
+			{{ display_pagination(
+				base_url=(url_for("index")),
+				pagination=pagination) }}
+		{% endif %}
+	{% endif %}
+{% endblock %}
